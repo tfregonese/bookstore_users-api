@@ -2,6 +2,7 @@ package users
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tfregonese/bookstore_users-api/domain/users"
@@ -10,29 +11,26 @@ import (
 )
 
 func GetUser(c *gin.Context) {
-	user, err := services.GetUser(1)
-	if err != nil {
+	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
+
+	if userErr != nil {
+		err := errors.NewBadRequestError("Invalid user id.")
+		c.JSON(err.Status, err)
 		return
 	}
+
+	user, getErr := services.GetUser(userId)
+	if getErr != nil {
+		c.JSON(getErr.Status, getErr)
+		return
+	}
+
 	c.JSON(http.StatusOK, user)
 }
 
 func CreateUser(c *gin.Context) {
 	var user users.User
-	/*
-			bytes, err := ioutil.ReadAll(c.Request.Body)
-			if err != nil {
-				// Handle the Error
-				c.String(http.StatusBadRequest, err.Error())
-				return
-			}
-			if err := json.Unmarshal(bytes, &user); err != nil {
-				// If there is no error in the body
-				c.String(http.StatusBadRequest, err.Error())
-				return
-			}
-		This can be replaced for:
-	*/
+
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//Handle error
 		restErr := errors.NewBadRequestError("Invalid Json")
