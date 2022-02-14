@@ -12,6 +12,22 @@ type RestErr struct {
 	Error   string `json:"error"`
 }
 
+func HandleError(err error) *RestErr {
+	sqlErr, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return NewInternalServerError(err.Error())
+	}
+
+	switch sqlErr.Number {
+	case 1062:
+		return NewBadRequestError(sqlErr.Message)
+	default:
+		fmt.Println(sqlErr.Number)
+		fmt.Println(sqlErr.Message)
+		return NewInternalServerError(err.Error())
+	}
+}
+
 func NewBadRequestError(message string) *RestErr {
 	return &RestErr{
 		Status:  http.StatusBadRequest,
@@ -33,21 +49,5 @@ func NewInternalServerError(message string) *RestErr {
 		Status:  http.StatusInternalServerError,
 		Error:   "internal_server_error",
 		Message: message,
-	}
-}
-
-func HandleMySQLError(err error) *RestErr {
-	sqlErr, ok := err.(*mysql.MySQLError)
-	if !ok {
-		return NewInternalServerError(err.Error())
-	}
-
-	switch sqlErr.Number {
-	case 1062:
-		return NewBadRequestError(sqlErr.Message)
-	default:
-		fmt.Println(sqlErr.Number)
-		fmt.Println(sqlErr.Message)
-		return NewInternalServerError(err.Error())
 	}
 }
