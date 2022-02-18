@@ -7,14 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tfregonese/bookstore_users-api/domain/users"
 	"github.com/tfregonese/bookstore_users-api/services"
-	"github.com/tfregonese/bookstore_users-api/utils/errors"
+	"github.com/tfregonese/bookstore_users-api/utils/error_utils"
 )
 
 func GetUser(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError("Invalid user id.")
+		err := error_utils.NewBadRequestError("Invalid user id.")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -25,15 +25,14 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
 func CreateUser(c *gin.Context) {
 	var user users.User
-
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//Handle error
-		restErr := errors.NewBadRequestError("Invalid Json")
+		restErr := error_utils.NewBadRequestError("Invalid Json")
 		c.JSON(http.StatusBadRequest, restErr)
 		return
 	}
@@ -45,21 +44,21 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result)
+	c.JSON(http.StatusCreated, result.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
 func UpdateUser(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError("Invalid user id.")
+		err := error_utils.NewBadRequestError("Invalid user id.")
 		c.JSON(err.Status, err)
 		return
 	}
 
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		restErr := errors.NewBadRequestError("Invalid Json.")
+		restErr := error_utils.NewBadRequestError("Invalid Json.")
 		c.JSON(http.StatusBadRequest, restErr)
 		return
 	}
@@ -73,14 +72,14 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, result.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
 func DeleteUser(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := errors.NewBadRequestError("Invalid user id.")
+		err := error_utils.NewBadRequestError("Invalid user id.")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -94,6 +93,20 @@ func DeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-func SearchUser(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "implement me!")
+func Search(c *gin.Context) {
+
+	userStatus := c.Query("user_status")
+	if len(userStatus) == 0 {
+		err := error_utils.NewBadRequestError("Invalid parameter.")
+		c.JSON(err.Status, err)
+		return
+	}
+
+	users, searchErr := services.SearchUser(userStatus)
+	if searchErr != nil {
+		c.JSON(searchErr.Status, searchErr)
+		return
+	}
+
+	c.JSON(http.StatusOK, users.Marshall(c.GetHeader("X-Public") == "true"))
 }

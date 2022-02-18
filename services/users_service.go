@@ -2,14 +2,19 @@ package services
 
 import (
 	"github.com/tfregonese/bookstore_users-api/domain/users"
-	"github.com/tfregonese/bookstore_users-api/utils/errors"
+	"github.com/tfregonese/bookstore_users-api/utils/crypto_utils"
+	"github.com/tfregonese/bookstore_users-api/utils/date_utils"
+	"github.com/tfregonese/bookstore_users-api/utils/error_utils"
 )
 
-func CreateUser(user users.User) (*users.User, *errors.RestErr) {
+func CreateUser(user users.User) (*users.User, *error_utils.RestErr) {
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
 
+	user.Status = users.StatusActive
+	user.DateCreated = date_utils.GetNowDBFormat()
+	user.Password = crypto_utils.GetMd5(user.Password)
 	if err := user.Save(); err != nil {
 		return nil, err
 	}
@@ -17,7 +22,7 @@ func CreateUser(user users.User) (*users.User, *errors.RestErr) {
 	return &user, nil
 }
 
-func GetUser(userId int64) (*users.User, *errors.RestErr) {
+func GetUser(userId int64) (*users.User, *error_utils.RestErr) {
 	user := users.User{
 		Id: userId,
 	}
@@ -29,7 +34,7 @@ func GetUser(userId int64) (*users.User, *errors.RestErr) {
 	return &user, nil
 }
 
-func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) {
+func UpdateUser(isPartial bool, user users.User) (*users.User, *error_utils.RestErr) {
 	current, err := GetUser(user.Id)
 	if err != nil {
 		return nil, err
@@ -58,8 +63,14 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr) 
 	return current, nil
 }
 
-func DeleteUser(userId int64) *errors.RestErr {
+func DeleteUser(userId int64) *error_utils.RestErr {
 	user := &users.User{Id: userId}
 
 	return user.Delete()
+}
+
+func SearchUser(userStatus string) (users.Users, *error_utils.RestErr) {
+	user := &users.User{}
+
+	return user.FindByStatus(userStatus)
 }

@@ -1,4 +1,4 @@
-package errors
+package error_utils
 
 import (
 	"fmt"
@@ -22,6 +22,8 @@ func HandleError(err error) *RestErr {
 	case 1062:
 		return NewBadRequestError(sqlErr.Message)
 	case 1054:
+		return NewInternalServerError(sqlErr.Message)
+	case 1136:
 		return NewInternalServerError(sqlErr.Message)
 	default:
 		fmt.Println(sqlErr.Number)
