@@ -10,7 +10,7 @@ import (
 	"github.com/tfregonese/bookstore_users-api/utils/error_utils"
 )
 
-func GetUser(c *gin.Context) {
+func Get(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
@@ -19,7 +19,7 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	user, getErr := services.GetUser(userId)
+	user, getErr := services.UserService.Get(userId)
 	if getErr != nil {
 		c.JSON(getErr.Status, getErr)
 		return
@@ -28,7 +28,7 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
-func CreateUser(c *gin.Context) {
+func Create(c *gin.Context) {
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//Handle error
@@ -37,7 +37,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	result, saveErr := services.CreateUser(user)
+	result, saveErr := services.UserService.Create(user)
 	if saveErr != nil {
 		//Handle saveErr
 		c.JSON(http.StatusBadRequest, saveErr)
@@ -47,7 +47,7 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, result.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
-func UpdateUser(c *gin.Context) {
+func Update(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
@@ -65,7 +65,7 @@ func UpdateUser(c *gin.Context) {
 
 	isPartial := c.Request.Method == http.MethodPatch
 	user.Id = userId
-	result, saveErr := services.UpdateUser(isPartial, user)
+	result, saveErr := services.UserService.Update(isPartial, user)
 	if saveErr != nil {
 		//Handle saveErr
 		c.JSON(http.StatusBadRequest, saveErr)
@@ -75,7 +75,7 @@ func UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, result.Marshall(c.GetHeader("X-Public") == "true"))
 }
 
-func DeleteUser(c *gin.Context) {
+func Delete(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
@@ -84,7 +84,7 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	deleteErr := services.DeleteUser(userId)
+	deleteErr := services.UserService.Delete(userId)
 	if deleteErr != nil {
 		c.JSON(deleteErr.Status, deleteErr)
 		return
@@ -102,7 +102,7 @@ func Search(c *gin.Context) {
 		return
 	}
 
-	users, searchErr := services.SearchUser(userStatus)
+	users, searchErr := services.UserService.Search(userStatus)
 	if searchErr != nil {
 		c.JSON(searchErr.Status, searchErr)
 		return

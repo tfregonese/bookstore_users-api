@@ -7,7 +7,21 @@ import (
 	"github.com/tfregonese/bookstore_users-api/utils/error_utils"
 )
 
-func CreateUser(user users.User) (*users.User, *error_utils.RestErr) {
+var (
+	UserService usersServiceInterface = &userService{}
+)
+
+type usersServiceInterface interface {
+	Create(users.User) (*users.User, *error_utils.RestErr)
+	Get(int64) (*users.User, *error_utils.RestErr)
+	Update(bool, users.User) (*users.User, *error_utils.RestErr)
+	Delete(int64) *error_utils.RestErr
+	Search(string) (users.Users, *error_utils.RestErr)
+}
+
+type userService struct{}
+
+func (s *userService) Create(user users.User) (*users.User, *error_utils.RestErr) {
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -22,7 +36,7 @@ func CreateUser(user users.User) (*users.User, *error_utils.RestErr) {
 	return &user, nil
 }
 
-func GetUser(userId int64) (*users.User, *error_utils.RestErr) {
+func (s *userService) Get(userId int64) (*users.User, *error_utils.RestErr) {
 	user := users.User{
 		Id: userId,
 	}
@@ -34,8 +48,8 @@ func GetUser(userId int64) (*users.User, *error_utils.RestErr) {
 	return &user, nil
 }
 
-func UpdateUser(isPartial bool, user users.User) (*users.User, *error_utils.RestErr) {
-	current, err := GetUser(user.Id)
+func (s *userService) Update(isPartial bool, user users.User) (*users.User, *error_utils.RestErr) {
+	current, err := s.Get(user.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +77,13 @@ func UpdateUser(isPartial bool, user users.User) (*users.User, *error_utils.Rest
 	return current, nil
 }
 
-func DeleteUser(userId int64) *error_utils.RestErr {
+func (s *userService) Delete(userId int64) *error_utils.RestErr {
 	user := &users.User{Id: userId}
 
 	return user.Delete()
 }
 
-func SearchUser(userStatus string) (users.Users, *error_utils.RestErr) {
+func (s *userService) Search(userStatus string) (users.Users, *error_utils.RestErr) {
 	user := &users.User{}
 
 	return user.FindByStatus(userStatus)
