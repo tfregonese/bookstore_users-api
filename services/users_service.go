@@ -17,11 +17,13 @@ type usersServiceInterface interface {
 	Update(bool, users.User) (*users.User, *error_utils.RestErr)
 	Delete(int64) *error_utils.RestErr
 	Search(string) (users.Users, *error_utils.RestErr)
+	LogInUser(users.LoginRequest) (*users.User, *error_utils.RestErr)
 }
 
 type userService struct{}
 
 func (s *userService) Create(user users.User) (*users.User, *error_utils.RestErr) {
+
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -37,6 +39,7 @@ func (s *userService) Create(user users.User) (*users.User, *error_utils.RestErr
 }
 
 func (s *userService) Get(userId int64) (*users.User, *error_utils.RestErr) {
+
 	user := users.User{
 		Id: userId,
 	}
@@ -49,6 +52,7 @@ func (s *userService) Get(userId int64) (*users.User, *error_utils.RestErr) {
 }
 
 func (s *userService) Update(isPartial bool, user users.User) (*users.User, *error_utils.RestErr) {
+
 	current, err := s.Get(user.Id)
 	if err != nil {
 		return nil, err
@@ -78,13 +82,29 @@ func (s *userService) Update(isPartial bool, user users.User) (*users.User, *err
 }
 
 func (s *userService) Delete(userId int64) *error_utils.RestErr {
+
 	user := &users.User{Id: userId}
 
 	return user.Delete()
 }
 
 func (s *userService) Search(userStatus string) (users.Users, *error_utils.RestErr) {
+
 	user := &users.User{}
 
 	return user.FindByStatus(userStatus)
+}
+
+func (s *userService) LogInUser(request users.LoginRequest) (*users.User, *error_utils.RestErr) {
+
+	dao := &users.User{
+		Email:    request.Email,
+		Password: crypto_utils.GetMd5(request.Password),
+	}
+
+	if err := dao.FindByEmailAndPassword(); err != nil {
+		return nil, err
+	}
+
+	return dao, nil
 }

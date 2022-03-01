@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	queryInsertUser       = "INSERT INTO users(first_name, last_name, email, date_created, status, password) VALUES(?,?,?,?,?,?);"
-	queryGetUser          = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE id=?;"
-	queryUpdateUser       = "UPDATE users SET first_name=?, last_name=?, email=?, status=?, password=? WHERE id=?;"
-	queryDeleteUser       = "DELETE FROM users WHERE id=?;"
-	queryFindUserByStatus = "SELECT id, first_name, last_name, email, date_created, status, password FROM users WHERE status=?;"
+	queryInsertUser             = "INSERT INTO users(first_name, last_name, email, date_created, status, password) VALUES(?,?,?,?,?,?);"
+	queryGetUser                = "SELECT id, first_name, last_name, email, date_created, status FROM users WHERE id=?;"
+	queryUpdateUser             = "UPDATE users SET first_name=?, last_name=?, email=?, status=?, password=? WHERE id=?;"
+	queryDeleteUser             = "DELETE FROM users WHERE id=?;"
+	queryFindByStatus           = "SELECT id, first_name, last_name, email, date_created, status, password FROM users WHERE status=?;"
+	queryFindByEmailAndPassword = "SELECT id, first_name, last_name, email, date_created, status, password FROM users WHERE email=? AND password=?;"
 )
 
 var (
@@ -102,7 +103,7 @@ func (user *User) Delete() *error_utils.RestErr {
 
 func (user *User) FindByStatus(status string) ([]User, *error_utils.RestErr) {
 
-	stmt, err := users_db.Client.Prepare(queryFindUserByStatus)
+	stmt, err := users_db.Client.Prepare(queryFindByStatus)
 	if err != nil {
 		logger.Error("error when trying to prepare find user by status statement", err)
 		return nil, error_utils.NewInternalServerError("database_error")
@@ -132,4 +133,21 @@ func (user *User) FindByStatus(status string) ([]User, *error_utils.RestErr) {
 	}
 
 	return results, nil
+}
+
+func (user *User) FindByEmailAndPassword() *error_utils.RestErr {
+	stmt, err := usersDB.Prepare(queryFindByEmailAndPassword)
+	if err != nil {
+		logger.Error("error when trying to prepare get user statement", err)
+		return error_utils.NewInternalServerError("database_error")
+	}
+	defer stmt.Close()
+
+	result := stmt.QueryRow(user.Email, user.Password)
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status, &user.Password); err != nil {
+		logger.Error("error when trying to execute find user by Email and Password statement", err)
+		return error_utils.NewInternalServerError("database_error")
+	}
+
+	return nil
 }
