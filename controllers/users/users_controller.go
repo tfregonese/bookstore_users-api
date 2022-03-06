@@ -1,20 +1,19 @@
 package users
 
 import (
+	"github.com/tfregonese/bookstore_utils-go/rest_errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tfregonese/bookstore_users-api/domain/users"
 	"github.com/tfregonese/bookstore_users-api/services"
-	"github.com/tfregonese/bookstore_users-api/utils/error_utils"
 )
 
 func Get(c *gin.Context) {
-
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := error_utils.NewBadRequestError("Invalid user id.")
+		err := rest_errors.NewBadRequestError("Invalid user id.")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -32,7 +31,7 @@ func Create(c *gin.Context) {
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		//Handle error
-		restErr := error_utils.NewBadRequestError("Invalid Json")
+		restErr := rest_errors.NewBadRequestError("Invalid Json")
 		c.JSON(http.StatusBadRequest, restErr)
 		return
 	}
@@ -51,14 +50,14 @@ func Update(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := error_utils.NewBadRequestError("Invalid user id.")
+		err := rest_errors.NewBadRequestError("Invalid user id.")
 		c.JSON(err.Status, err)
 		return
 	}
 
 	var user users.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		restErr := error_utils.NewBadRequestError("Invalid Json.")
+		restErr := rest_errors.NewBadRequestError("Invalid Json.")
 		c.JSON(http.StatusBadRequest, restErr)
 		return
 	}
@@ -79,7 +78,7 @@ func Delete(c *gin.Context) {
 
 	userId, userErr := strconv.ParseInt(c.Param("user_id"), 10, 64)
 	if userErr != nil {
-		err := error_utils.NewBadRequestError("Invalid user id.")
+		err := rest_errors.NewBadRequestError("Invalid user id.")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -97,7 +96,7 @@ func Search(c *gin.Context) {
 
 	userStatus := c.Query("user_status")
 	if len(userStatus) == 0 {
-		err := error_utils.NewBadRequestError("Invalid parameter.")
+		err := rest_errors.NewBadRequestError("Invalid parameter.")
 		c.JSON(err.Status, err)
 		return
 	}
@@ -115,7 +114,7 @@ func Login(c *gin.Context) {
 
 	var request users.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		restErr := error_utils.NewBadRequestError(err.Error())
+		restErr := rest_errors.NewBadRequestError(err.Error())
 		c.JSON(restErr.Status, restErr)
 		return
 	}
